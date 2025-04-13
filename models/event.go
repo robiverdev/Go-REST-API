@@ -1,10 +1,14 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"example.com/rest-api/db"
+)
 
 // Custom event type(struct)
 type Event struct {
-	ID int
+	ID int64
 	Title string `binding:"required"`
 	Description string `binding:"required"`
 	Location string `binding:"required"`
@@ -14,11 +18,46 @@ type Event struct {
 
 var events = []Event{}
 
-func (e Event) Save() {
-	// task : add it to a database
-	events = append(events, e)
+func (e Event) Save() error {
+	// add to a DB
+	query := `
+	INSERT INTO events(title, description, location, dateTime, user_id) 
+	VALUES(?,?,?,?,?)` // preventing sql injection
+	stmt, err := db.DB.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close() // ensures the prepared statement is closed
+	result, err := stmt.Exec(e.Title, e.Description, e.Location, e.DateTime, e.UserID )
+	if err != nil {
+		return err
+	}
+	id, err := result.LastInsertId() // get ID of the last inserted event
+	e.ID = id
+	return err
 }
 
-func GetAllEvents() []Event {
-	return events
+func GetAllEvents() ([]Event, error) {
+	query := `SELECT * FROM events`
+	rows, err := db.DB.Query(query) // you can use Exec as well, but Exec is usually used for data that changes (inserts, updates, ...), .Query is used for fetching data
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close() // always closed when the function is done
+
+	var events []Event
+
+	// as long s there are rows to read - Next() returns bool
+	for rows.Next() {
+		var event Event
+		err := rows.Scan(&event.ID, &event.Title, &event.Description, &event.Location, &event.DateTime, &event.UserID) // pointers to Event struct
+
+		if err != nil {
+			return nil, err
+		}
+
+		events = append(events, event)
+	}
+
+	return events, nil 
 }

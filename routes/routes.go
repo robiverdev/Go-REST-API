@@ -1,13 +1,20 @@
 package routes
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 func RegisterRoutes(server *gin.Engine) {
 	server.GET("/events", getEvents) // GET request
 	server.GET("/events/:id",getEvent) // GET a single event by ID
-	server.POST("/events", createEvent) // POST request
-	server.PUT("/events/:id", updateEvent) // PUT request
-	server.DELETE("/events/:id", deleteEvent) // DELETE request
+
+	// middleware
+	authenticated := server.Group("/")
+	authenticated.Use()
+	authenticated.POST("/events", createEvent)
+	authenticated.PUT("/events/:id", updateEvent)
+	authenticated.DELETE("/events/:id", deleteEvent)
+
 	server.POST("/signup", signUp) // POST request for creating new users
 	server.POST("/login", login) // POST login
 }

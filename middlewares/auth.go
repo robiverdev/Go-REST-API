@@ -19,6 +19,7 @@ func Authentication (context *gin.Context) {
 
 	if err != nil {
 		context.JSON(http.StatusUnauthorized, gin.H{"message": "not authorized"})
+		context.Abort()
 		return
 	}
 

@@ -75,7 +75,7 @@ func GetEventById(id int64) (*Event, error) {
 func (event Event) Update() error {
 	query := `
 	UPDATE events
-	SET title = ?, description = ?, location = ?, dateTime = ?
+	SET title = ?, description = ?, location = ?, dateTime = ?, user_id = ?
 	WHERE id = ?
 	`
 	stmt, err := db.DB.Prepare(query)
